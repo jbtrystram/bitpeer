@@ -75,6 +75,21 @@ public class BitTorrent implements EDProtocol {
 	private static final String PAR_DUP_REQ = "duplicated_requests";
 
 	/**
+	 *	Defines the expected proportion of freeriders in the <tt>network.size</tt>
+	 *  Free riders are implemented as nodes leaving the network when completing the download.
+	 *	@config
+	 */
+	private static final String FREE_RIDERS="free_riders";
+
+    /**
+     *	Define th radius in which a node can have neighbours.
+     *	The value is a percentage of the size of the map.
+     *  At 100%  a node covers the whole map.
+     */
+    private static final String PEERSET_RADIUS="peerset_radius";
+
+
+	/**
 	 *	KEEP_ALIVE message.
 	 *	@see SimpleEvent#type "Event types"
 	 */
@@ -336,6 +351,17 @@ public class BitTorrent implements EDProtocol {
 	int peersetSize;
 
 	/**
+	 *	The percentage of free riders
+	 */
+	int freeRiders;
+
+    /**
+     *	The percentage of the map covered by the peerset
+     */
+    int peersetRadius;
+
+
+	/**
 	 * The ID of the current node
 	 */
 	private long thisNodeID;
@@ -391,6 +417,8 @@ public class BitTorrent implements EDProtocol {
 		numberOfDuplicatedRequests = (int)Configuration.getInt(prefix+"."+PAR_DUP_REQ);
 		maxGrowth = (int)Configuration.getInt(prefix+"."+PAR_MAX_GROWTH);
 		nMaxNodes = Network.getCapacity()-1;
+		freeRiders = (int)Configuration.getInt(prefix+"."+FREE_RIDERS);
+		peersetRadius = 5*(int)Configuration.getInt(prefix+"."+PEERSET_RADIUS);
 	}
 
 	/** Compute the distance between two Nodes
@@ -532,7 +560,7 @@ public class BitTorrent implements EDProtocol {
 		if(node != null && node.getFailState() != Fallible.OK)
 			return;
 
-		try{
+		//try{
 
 		switch(((SimpleEvent)event).getType()){
 
@@ -993,7 +1021,7 @@ public class BitTorrent implements EDProtocol {
 						this.peerStatus = 1;
 
 						//bu Adrien : added freeRiders
-						if (CommonState.r.nextInt(10) == 0) {
+						if (CommonState.r.nextInt(100) <= freeRiders) {
 							Network.remove((int)node.getID());
 						}
 					}
@@ -1111,7 +1139,7 @@ public class BitTorrent implements EDProtocol {
 							i= CommonState.r.nextInt(nMaxNodes+maxGrowth);
 						}
 					}
-					if(cache[i].node != null && getDistance(cache[i].node,sender)<200){
+					if(cache[i].node != null && getDistance(cache[i].node,sender) < peersetRadius){
 						tmp[j] = cache[i];
 						j++;
 					}
@@ -1339,9 +1367,10 @@ public class BitTorrent implements EDProtocol {
 			}; break;
 
 		}
-	}catch(Exception e){
+/**	}catch(Exception e){
 		System.err.println(e);
-	}
+
+	}*/
 	}
 
 	/**
