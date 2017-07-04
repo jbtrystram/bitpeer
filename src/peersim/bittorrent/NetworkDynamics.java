@@ -27,7 +27,6 @@ import peersim.config.*;
 import peersim.core.*;
 import peersim.transport.*;
 import peersim.edsim.*;
-import java.util.Random;
 
 /**
  *	This {@link Control} can change the size of networks by adding and removing
@@ -82,6 +81,13 @@ public class NetworkDynamics implements Control {
 	 */
 	private static final String PAR_REMOVE="remove";
 
+    /**
+     * Specifies the number of nodes than will be placed in sleep.
+     * @config
+     */
+    private static final String PAR_SLEEP="sleep";
+
+
 
 	/*
 	 *	The following are local variables, obtained from config property.
@@ -93,6 +99,7 @@ public class NetworkDynamics implements Control {
 	private boolean trackerCanDie = false; // false (value 0) by default
 	private final int add; // number of nodes to be added
 	private final int remove; // number of nodes to be removed
+    private final int sleep; // number of nodes to be put asleep
 
 	private final NodeInitializer init;
 	private Node tracker;
@@ -108,6 +115,7 @@ public class NetworkDynamics implements Control {
 		tid = Configuration.getPid(prefix+"."+PAR_TRANSPORT);
 		add = Configuration.getInt(prefix + "." + PAR_ADD);
 		remove = Configuration.getInt(prefix + "." + PAR_REMOVE);
+		sleep = Configuration.getInt(prefix + "." + PAR_SLEEP);
 
 		/*
 		 * By default, the tracker can not disappear.
@@ -239,13 +247,21 @@ public class NetworkDynamics implements Control {
 		}
 	}
 
-	//By Vincent 		// the index of the node to move
+
+    /**
+     * Move the given node
+     * if the tracker is up, the node to be removed will be removed also
+     * from the tracker's cache.
+     *
+     * @param nodeIndex ID of the node to move.
+     */
 	protected void move(int nodeIndex){
 
 		int oldY=((BitTorrent)(Network.get(nodeIndex).getProtocol(pid))).getThisNodeCoordY();
 		int oldX=((BitTorrent)(Network.get(nodeIndex).getProtocol(pid))).getThisNodeCoordX();
-		Random ran = CommonState.r;
+
 		/* --- Random walk --- */
+		//Random ran = CommonState.r;
 		// int newX = ran.nextInt(10) - 5;
 		// int newY = ran.nextInt(10) - 5;
 
@@ -278,7 +294,6 @@ public class NetworkDynamics implements Control {
 
 		Node nodeToMove = Network.move(nodeIndex,newX,newY);
 		if ( ((BitTorrent)tracker.getProtocol(pid)).moveNeighbor(nodeToMove)){
-			//nodeIndex = CommonState.r.nextInt(Network.size());
 			// then remove it from the tracker's cache, if it is possible (= the tracker is up);
 			if (tracker.isUp()) {
 				((BitTorrent)(Network.get(nodeIndex).getProtocol(pid))).setThisNodeCoordY(oldY+newY);
@@ -287,63 +302,67 @@ public class NetworkDynamics implements Control {
 		}else{
 			System.err.println("erreur moveNeighbor");
 		}
-			//System.out.print("Coucou, je suis le tracker et j'ai bien vu qu'un noeud a bougé");
-			////By vincent System.out.println("DYN: A node has been removed from the network.");
 	}
+
 	/**
 	 * Calls {@link #add(int)} or {@link #remove} with the parameters defined by the
 	 * configuration.
 	 * @return always false
 	 */
-	public boolean execute(){
-		int choice = (CommonState.r.nextInt(11)); // 0 or 1 or more
+	public boolean execute() {
+        // Add or remove nodes
+        boolean add = (CommonState.r.nextBoolean()); // True or False
 
-		for (int j=0; j<=Network.size()-1;j++){
-			if(((BitTorrent)(Network.get(j).getProtocol(pid))).getNodeMobility()){
-				move(j);
-			}
-		}
 
-		// adding new nodes
-		if (choice == 0) {
+        // move all the nodes
+        for (int j = 0; j <= Network.size() - 1; j++) {
+            if (((BitTorrent) (Network.get(j).getProtocol(pid))).getNodeMobility()) {
+                move(j);
+            }
+        }
+
+        // adding new nodes
+        if (add) {
 			/*
 			 * If the specified number of nodes cannot be added,
 			 * it tries to add a less number of nodes without
 			 * going out of bounds. Otherwise, all specified nodes
 			 * will be added.
 			 */
-			if (Network.size() + this.add > maxSize) {
-				////By vincent System.out.println("DYN: " + (maxSize - Network.size()) + " nodes will be added.");
-				add(maxSize - Network.size());
-			}
-			else {
-				////By vincent System.out.println("DYN: " + this.add + " nodes will be added.");
-				add(this.add);
-			}
-		}
-		// removing existing nodes
-		else if(choice == 1){
-			if (Network.size() - this.remove < minsize) {
-				////By vincent System.out.println("DYN: " + (Network.size() - minsize) + " nodes will be removed.");
-				remove(Network.size() - minsize);
-			}
-			else {
-				////By vincent System.out.println("DYN: " + this.remove + " nodes will be removed.");
-				remove(this.remove);
-			}
-		} else {
-			// find a node and randomly toggle its state between OK and DOWN
-			// only switch a node that has energy
-			int toggledNode = CommonState.r.nextInt(Network.size());
-			if(Network.node[toggledNode] != null
-			&& Network.node[toggledNode].getFailState() != Fallible.DEAD
-			// && Network.node[toggledNode].getIndicatorEnergy() == 0
-			){
-				Network.node[toggledNode].setFailState(
-					Network.node[toggledNode].getFailState() == Fallible.OK ? Fallible.DOWN : Fallible.OK
-				);
-			}
-		}
+            if (Network.size() + this.add > maxSize) {
+                ////By vincent System.out.println("DYN: " + (maxSize - Network.size()) + " nodes will be added.");
+                add(maxSize - Network.size());
+            } else {
+                ////By vincent System.out.println("DYN: " + this.add + " nodes will be added.");
+                add(this.add);
+            }
+        }
+        // or removing existing nodes
+        else {
+            if (Network.size() - this.remove < minsize) {
+                ////By vincent System.out.println("DYN: " + (Network.size() - minsize) + " nodes will be removed.");
+                remove(Network.size() - minsize);
+            } else {
+                ////By vincent System.out.println("DYN: " + this.remove + " nodes will be removed.");
+                remove(this.remove);
+            }
+
+
+            // shut down nodes temporarly
+        }
+        for (int i=0; i < sleep; i++) {
+            // find a node and randomly toggle its state between OK and DOWN
+            // only switch a node that has energy
+            int toggledNode = CommonState.r.nextInt(Network.size());
+            if (Network.node[toggledNode] != null
+                    && Network.node[toggledNode].getFailState() != Fallible.DEAD
+                // && Network.node[toggledNode].getIndicatorEnergy() == 0
+                    ) {
+                Network.node[toggledNode].setFailState(
+                        Network.node[toggledNode].getFailState() == Fallible.OK ? Fallible.DOWN : Fallible.OK
+                );
+            }
+        }
 		return false;
 	}
 }
