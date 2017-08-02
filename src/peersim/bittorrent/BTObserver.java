@@ -117,13 +117,19 @@ import peersim.util.*;
         //Affichage MAP 2D
         int mypeerStatus = ((BitTorrent)(Network.get(i).getProtocol(pid))).getPeerStatus();
         mypeerStatus = Network.get(i).getFailState() == Fallible.DOWN ? 2 : mypeerStatus;
-
+		int peerFailState = Network.get(i).getFailState();
+        // Target output : Time  ID  coord.X coord.Y pieces L/S Energy-state
+        // Sample output : 1000  27   984      153    266    1    1
+		//												1 is seeder
+				//											  Energy OK = 0, DEAD = 1, DOWN = 2
         System.out.println(
-        ((BitTorrent)(Network.get(i).getProtocol(pid))).getThisNodeCoordX()
-        +" "+   ((BitTorrent)(Network.get(i).getProtocol(pid))).getThisNodeCoordY()
-        +" "+   numberOfCompletedPieces
-        +" "+   mypeerStatus
-        +" "+   CommonState.getTime());
+        		CommonState.getTime() + " " +
+			Network.get(i).getID() + " " +
+        	((BitTorrent)(Network.get(i).getProtocol(pid))).getThisNodeCoordX() + " " +
+         	((BitTorrent)(Network.get(i).getProtocol(pid))).getThisNodeCoordY() + " " +
+			numberOfCompletedPieces +" "+
+						peerStatus + " " +
+						mypeerStatus);
 
         ////By vincent System.out.println("OBS: node " + ((BitTorrent)(Network.get(i).getProtocol(pid))).getThisNodeID() + "(" + peerStatus + ")" + "\t pieces completed: " + numberOfCompletedPieces + "\t \t down: " + ((BitTorrent)(Network.get(i).getProtocol(pid))).nPiecesDown + "\t up: " + ((BitTorrent)(Network.get(i).getProtocol(pid))).nPiecesUp + " time: " + CommonState.getTime());
 				////By vincent System.out.println("[OBS] t " + CommonState.getTime() + "\t pc " + numberOfCompletedPieces + "\t n " + ((BitTorrent)(Network.get(i).getProtocol(pid))).getThisNodeID());
