@@ -985,7 +985,7 @@ public class BitTorrent implements EDProtocol {
 					}
 				}
 
-				if(status[currentPiece]==16){ // if piece completed, I change the currentPiece to the next wanted
+				if(currentPiece !=-1 && status[currentPiece]==16){ // if piece completed, I change the currentPiece to the next wanted
 					nPieceCompleted++;
 					ev = new IntMsg(HAVE, node, currentPiece);
 					for(int i=0; i<swarmSize; i++){ // I send the HAVE for the piece
