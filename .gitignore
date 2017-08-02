@@ -1,3 +1,7 @@
 lib
 lib/*
 src/*.iml
+.idea/
+bitpeer.iml
+out/
+
