@@ -568,7 +568,7 @@ public class BitTorrent implements EDProtocol {
 			{
 				Node sender = ((IntMsg)event).getSender();
 				int isResponse = ((IntMsg)event).getInt();
-				////By vincent System.out.println("process, keep_alive: sender is "+sender.getID()+", local is "+node.getID());
+				//System.out.println("process, keep_alive: sender is "+sender.getID()+", local is "+node.getID());
 				Element e = search(sender.getID());
 				if(e!= null){ //if I know the sender
 					cache[e.peer].isAlive();
@@ -580,7 +580,7 @@ public class BitTorrent implements EDProtocol {
 					}
 				}
 				else{
-					//System.err.println("despite it should never happen, it happened");
+					System.err.println("Unexpected : unknown KEEP_ALIVE sender. BitTorrent.java:583");
 					ev = new BitfieldMsg(BITFIELD, true, false, node, status, nPieces);
 					latency = ((Transport)node.getProtocol(tid)).getLatency(node,sender);
 					EDSimulator.add(latency,ev,sender,pid);
@@ -592,14 +592,14 @@ public class BitTorrent implements EDProtocol {
 			case CHOKE: // 2, CHOKE message.
 			{
 				Node sender = ((SimpleMsg)event).getSender();
-				////By vincent System.out.println("process, choke: sender is "+sender.getID()+", local is "+node.getID());
+				//System.out.println("process, choke: sender is "+sender.getID()+", local is "+node.getID());
 				Element e = search(sender.getID());
 				if(e!= null){ //if I know the sender
 					cache[e.peer].isAlive();
 					unchokedBy[e.peer]= false; // I'm choked by it
 				}
 				else{
-					//System.err.println("despite it should never happen, it happened");
+					System.err.println("Unexpected : unknown CHOKE sender. BitTorrent.java:602");
 					ev = new BitfieldMsg(BITFIELD, true, false, node, status, nPieces);
 					latency = ((Transport)node.getProtocol(tid)).getLatency(node,sender);
 					EDSimulator.add(latency,ev,sender,pid);
@@ -613,7 +613,7 @@ public class BitTorrent implements EDProtocol {
 
 
 				Node sender = ((SimpleMsg)event).getSender();
-				////By vincent System.out.println("process, unchoke: sender is "+sender.getID()+", local is "+node.getID());
+				//System.out.println("process, unchoke: sender is "+sender.getID()+", local is "+node.getID());
 				Element e = search(sender.getID());
 				if(e != null){ // If I know the sender
 					int senderIndex = e.peer;
@@ -630,8 +630,7 @@ public class BitTorrent implements EDProtocol {
 							cache[senderIndex].justSent();
 						}
 						if(!alive(cache[senderIndex].node)){
-							//edit vincent
-							////By vincent System.out.println("unchoke1 rm neigh "+ cache[i].node.getID() );
+							//System.out.println("unchoke1 rm neigh "+ cache[i].node.getID() );
 							removeNeighbor(cache[senderIndex].node);
 							processNeighborListSize(node,pid);
 							return;
@@ -660,7 +659,7 @@ public class BitTorrent implements EDProtocol {
 
 								if(!alive(cache[j].node)){
 
-									////By vincent System.out.println("unchoke2 rm neigh "+ cache[j].node.getID() );
+									//System.out.println("unchoke2 rm neigh "+ cache[j].node.getID() );
 									removeNeighbor(cache[j].node);
 									processNeighborListSize(node,pid);
 								}
@@ -676,8 +675,7 @@ public class BitTorrent implements EDProtocol {
 							}
 							else{
 								if(!alive(cache[senderIndex].node)){
-									//edit vincent
-									////By vincent System.out.println("unchoke3 rm neigh "+ cache[senderIndex].node.getID() );
+									//System.out.println("unchoke3 rm neigh "+ cache[senderIndex].node.getID() );
 									removeNeighbor(cache[senderIndex].node);
 									processNeighborListSize(node,pid);
 								}
@@ -690,7 +688,7 @@ public class BitTorrent implements EDProtocol {
 				}
 				else // It should never happen.
 				{
-					//System.err.println("despite it should never happen, it happened");
+					System.err.println("Unexpected : unknown UNCHOKE sender. BitTorrent.java:691");
 					for(int i=0; i<swarmSize; i++)
 						if(cache[i].node !=null)
 							System.err.println(cache[i].node.getID());
@@ -705,7 +703,7 @@ public class BitTorrent implements EDProtocol {
 			{
 				numInterestedPeers++;
 				Node sender = ((IntMsg)event).getSender();
-				////By vincent System.out.println("process, interested: sender is "+sender.getID()+", local is "+node.getID());
+				//System.out.println("process, interested: sender is "+sender.getID()+", local is "+node.getID());
 				int value = ((IntMsg)event).getInt();
 				Element e = search(sender.getID());
 				if(e!=null){
@@ -713,7 +711,7 @@ public class BitTorrent implements EDProtocol {
 					cache[e.peer].interested = value;
 				}
 				else{
-					//System.err.println("despite it should never happen, it happened");
+					System.err.println("Unexpected : unknown KEEP_ALIVE sender. BitTorrent.java:714");
 					ev = new BitfieldMsg(BITFIELD, true, false, node, status, nPieces);
 					latency = ((Transport)node.getProtocol(tid)).getLatency(node,sender);
 					EDSimulator.add(latency,ev,sender,pid);
@@ -726,7 +724,7 @@ public class BitTorrent implements EDProtocol {
 			{
 				numInterestedPeers--;
 				Node sender = ((IntMsg)event).getSender();
-				////By vincent System.out.println("process, not_interested: sender is "+sender.getID()+", local is "+node.getID());
+				//System.out.println("process, not_interested: sender is "+sender.getID()+", local is "+node.getID());
 				int value = ((IntMsg)event).getInt();
 				Element e = search(sender.getID());
 				if(e!=null){
@@ -741,7 +739,7 @@ public class BitTorrent implements EDProtocol {
 
 
 				Node sender = ((IntMsg)event).getSender();
-				////By vincent System.out.println("process, have: sender is "+sender.getID()+", local is "+node.getID());
+				//System.out.println("process, have: sender is "+sender.getID()+", local is "+node.getID());
 				int piece = ((IntMsg)event).getInt();
 				Element e = search(sender.getID());
 				if(e!=null){
@@ -755,7 +753,7 @@ public class BitTorrent implements EDProtocol {
 					e.isSeeder = isSeeder;
 				}
 				else{
-					//System.err.println("despite it should never happen, it happened");
+					System.err.println("Unexpected : unknown HAVE sender. BitTorrent.java:756");
 					ev = new BitfieldMsg(BITFIELD, true, false, node, status, nPieces);
 					latency = ((Transport)node.getProtocol(tid)).getLatency(node,sender);
 					EDSimulator.add(latency,ev,sender,pid);
@@ -776,12 +774,12 @@ public class BitTorrent implements EDProtocol {
 						nBitfieldSent--;
 					// otherwise is a response with ack that follows a duplicate
 					// insertion attempt
-					////By vincent System.out.println("process, bitfield_resp_nack: sender is "+sender.getID()+", local is "+node.getID());
+					//System.out.println("process, bitfield_resp_nack: sender is "+sender.getID()+", local is "+node.getID());
 					return;
 				}
 				/*Request with NACK*/
 				if(((BitfieldMsg)event).isRequest && !((BitfieldMsg)event).ack){
-					////By vincent System.out.println("process, bitfield_req_nack: sender is "+sender.getID()+", local is "+node.getID());
+					//System.out.println("process, bitfield_req_nack: sender is "+sender.getID()+", local is "+node.getID());
 					if(alive(sender)){
 						Element e = search(sender.getID());
 						ev = new BitfieldMsg(BITFIELD, false, true, node, status, nPieces); //response with ack
@@ -793,7 +791,7 @@ public class BitTorrent implements EDProtocol {
 				/*Response with ACK*/
 				if(!((BitfieldMsg)event).isRequest && ((BitfieldMsg)event).ack){
 					nBitfieldSent--;
-					////By vincent System.out.println("process, bitfield_resp_ack: sender is "+sender.getID()+", local is "+node.getID());
+					//System.out.println("process, bitfield_resp_ack: sender is "+sender.getID()+", local is "+node.getID());
 					if(alive(sender)){
 						if(addNeighbor(sender)){
 							Element e = search(sender.getID());
@@ -829,13 +827,12 @@ public class BitTorrent implements EDProtocol {
 						}
 					}
 					else
-					//edit vincent
 					System.out.print(" ");
-						////By vincent System.out.println("Sender "+sender.getID()+" not alive");
+						//System.out.println("Sender "+sender.getID()+" not alive");
 				}
 				/*Request with ACK*/
 				if(((BitfieldMsg)event).isRequest && ((BitfieldMsg)event).ack){
-					////By vincent System.out.println("process, bitfield_req_ack: sender is "+sender.getID()+", local is "+node.getID());
+					//System.out.println("process, bitfield_req_ack: sender is "+sender.getID()+", local is "+node.getID());
 					if(alive(sender)){
 						if(addNeighbor(sender)){
 							Element e = search(sender.getID());
@@ -889,7 +886,7 @@ public class BitTorrent implements EDProtocol {
 					}
 					else
 					System.out.print(" ");
-						//By vincent System.out.println("Sender "+sender.getID()+" not alive");
+						//System.out.println("Sender "+sender.getID()+" not alive");
 				}
 			};break;
 
@@ -947,7 +944,7 @@ public class BitTorrent implements EDProtocol {
 
 				if(peerStatus == 1)// To save CPU cycles
 					return;
-				////By vincent System.out.println("process, piece: sender is "+sender.getID()+", local is "+node.getID());
+				//System.out.println("process, piece: sender is "+sender.getID()+", local is "+node.getID());
 				Element e = search(sender.getID());
 
 				if(e==null){ //I can't accept a piece not wait
@@ -995,7 +992,7 @@ public class BitTorrent implements EDProtocol {
 							cache[i].justSent();
 						}
 						if(!alive(cache[i].node)){
-							////By vincent System.out.println("piece3 rm neigh "+ cache[i].node.getID() );
+							//System.out.println("piece3 rm neigh "+ cache[i].node.getID() );
 
 							removeNeighbor(cache[i].node);
 							processNeighborListSize(node,pid);
@@ -1009,18 +1006,17 @@ public class BitTorrent implements EDProtocol {
 							cache[i].justSent();
 						}
 						if(!alive(cache[i].node)){
-							////By vincent System.out.println("piece4 rm neigh "+ cache[i].node.getID() );
+							//System.out.println("piece4 rm neigh "+ cache[i].node.getID() );
 
 							removeNeighbor(cache[i].node);
 							processNeighborListSize(node,pid);
 						}
 					}
 					if(nPieceCompleted == nPieces){
-						//edit vincent
-						////By vincent System.out.println("FILE COMPLETED for peer "+node.getID());
+						//System.out.println("FILE COMPLETED for peer "+node.getID());
 						this.peerStatus = 1;
 
-						//bu Adrien : added freeRiders
+						//by Adrien : added freeRiders
 						if (CommonState.r.nextInt(100) <= freeRiders) {
 							Network.remove((int)node.getID());
 						}
@@ -1066,7 +1062,7 @@ public class BitTorrent implements EDProtocol {
 			case PEERSET: // PEERSET message
 			{
 				Node sender = ((PeerSetMsg)event).getSender();
-				////By vincent System.out.println("process, peerset: sender is "+sender.getID()+", local is "+node.getID());
+				//System.out.println("process, peerset: sender is "+sender.getID()+", local is "+node.getID());
 				Neighbor n[] = ((PeerSetMsg)event).getPeerSet();
 
 				for(int i=0; i<peersetSize; i++){
@@ -1085,7 +1081,7 @@ public class BitTorrent implements EDProtocol {
 			{
 				//On récupère le node qui envoie le message TRACKER
 				Node sender = ((SimpleMsg)event).getSender();
-				//By vincent System.out.println("process, tracker: sender is "+sender.getID()+", local is "+node.getID());
+				System.out.println("process, tracker: sender is "+sender.getID()+", local is "+node.getID());
 
 				//Si le sender est mort on sort
 				if(!alive(sender))
@@ -1256,7 +1252,7 @@ public class BitTorrent implements EDProtocol {
 						latency = ((Transport)node.getProtocol(tid)).getLatency(node, cache[i].node);
 						EDSimulator.add(latency,ev,cache[i].node,pid);
 						cache[i].justSent();
-						////By vincent System.out.println("average time, unchoked: "+cache[i].node.getID());
+						//System.out.println("average time, unchoked: "+cache[i].node.getID());
 					}
 					else{ // the chokes
 						if(alive(cache[i].node) && (cache[i].status == 1 || cache[i].status == 2)){
@@ -1284,7 +1280,7 @@ public class BitTorrent implements EDProtocol {
 			case OPTUNCHK_TIME:
 			{
 
-				////By vincent System.out.println("process, optunchk_time");
+				//System.out.println("process, optunchk_time");
 
 				ev = new SimpleEvent(OPTUNCHK_TIME);
 				EDSimulator.add(30000,ev,node,pid);
@@ -1304,7 +1300,7 @@ public class BitTorrent implements EDProtocol {
 			{
 				if(this.peerStatus == 1) // I'm a seeder, I don't update the event
 					return;
-				////By vincent System.out.println("process, antisnub_time");
+				//System.out.println("process, antisnub_time");
 				for(int i=0; i<nNodes; i++){
 					if(byPeer[i].valueDOWN >0 && (byPeer[i].valueDOWN - byPeer[i].head60)==0){// No blocks downloaded in 1 min
 						cache[byPeer[i].peer].status = 2; // I'm snubbed by it
@@ -1319,7 +1315,7 @@ public class BitTorrent implements EDProtocol {
 			case CHECKALIVE_TIME:
 			{
 
-				////By vincent System.out.println("process, checkalive_time");
+				//System.out.println("process, checkalive_time");
 
 				long now = CommonState.getTime();
 				for(int i=0; i<swarmSize; i++){
@@ -1335,10 +1331,9 @@ public class BitTorrent implements EDProtocol {
 					receive anything from it though I sent a keepalive 2 minutes ago*/
 					else{
 						if(cache[i].lastSeen <(now-121000) && cache[i].node != null && cache[i].lastSent < (now-121000)){
-							//Edit by Vincent
-							////By vincent System.out.println("process, checkalive_time, rm neigh " + cache[i].node.getID());
+							System.out.println("process, checkalive_time, rm neigh " + cache[i].node.getID());
 							if(cache[i].node.getIndex() != -1){
-								//By vincent System.out.println("This should never happen: I remove a node that is not effectively died");
+								System.out.println("This should never happen: I remove a node that is not effectively died. BitTorrent.java:1337");
 							}
 							removeNeighbor(cache[i].node);
 							processNeighborListSize(node,pid);
@@ -1351,7 +1346,7 @@ public class BitTorrent implements EDProtocol {
 
 			case TRACKERALIVE_TIME:
 			{
-				////By vincent System.out.println("process, trackeralive_time");
+				//System.out.println("process, trackeralive_time");
 				if(alive(tracker)){
 					ev = new SimpleEvent(TRACKERALIVE_TIME);
 					EDSimulator.add(1800000,ev,node,pid);
@@ -1513,7 +1508,7 @@ public class BitTorrent implements EDProtocol {
 		}
 		else{
 			if((nNodes+nBitfieldSent) < swarmSize){
-				////By vincent System.out.println("I'm the node " + this.thisNodeID + ", trying to add node "+neighbor.getID());
+				//System.out.println("I'm the node " + this.thisNodeID + ", trying to add node "+neighbor.getID());
 				for(int i=0; i<swarmSize; i++){
 					if(cache[i].node == null){
 						cache[i].node = neighbor;
@@ -1523,11 +1518,11 @@ public class BitTorrent implements EDProtocol {
 						byPeer[nNodes].ID = neighbor.getID();
 						sortByPeer();
 						this.nNodes++;
-						////By vincent System.out.println(neighbor.getID()+" added!");
+						//System.out.println(neighbor.getID()+" added!");
 						return true;
 					}
 				}
-				//By vincent System.out.println("Node not added, no places available");
+				//System.out.println("Node not added, no places available");
 			}
 		}
 		return false;
@@ -1657,7 +1652,7 @@ public class BitTorrent implements EDProtocol {
 			}
 			else{ // I cannot send request
 				if(!alive(cache[sender].node) && cache[sender].node!=null){
-					//By vincent System.out.println("piece2 rm neigh "+ cache[sender].node.getID() );
+					//System.out.println("piece2 rm neigh "+ cache[sender].node.getID() );
 					removeNeighbor(cache[sender].node);
 					processNeighborListSize(node,pid);
 				}
@@ -1700,7 +1695,7 @@ public class BitTorrent implements EDProtocol {
 					cache[j].justSent();
 				}
 				if(!alive(cache[j].node)){
-					////By vincent System.out.println("piece1 rm neigh "+ cache[j].node.getID() );
+					//System.out.println("piece1 rm neigh "+ cache[j].node.getID() );
 
 					removeNeighbor(cache[j].node);
 					processNeighborListSize(node,pid);
@@ -1728,7 +1723,7 @@ public class BitTorrent implements EDProtocol {
 			i--;
 		}
 		if(i==-1){// No places in the pendingRequest available
-				  ////By vincent System.out.println("Pendig request queue full!");
+				  //System.out.println("Pendig request queue full!");
 			return -2;
 		}
 		int j;
@@ -2201,6 +2196,4 @@ class Request{
 	 *	The sender of the request.
 	 */
 	public Node sender;
-
-
 }
