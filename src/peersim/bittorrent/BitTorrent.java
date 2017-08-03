@@ -1138,7 +1138,7 @@ public class BitTorrent implements EDProtocol {
 						tmp[j] = cache[i];
 						j++;
 					}
-				}q
+				}
 
 				//Opération d'envoi de tmp et du PEERSET au sender
 				ev = new PeerSetMsg(PEERSET, tmp, node);
