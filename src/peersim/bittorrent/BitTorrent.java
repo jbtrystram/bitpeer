@@ -27,6 +27,8 @@ import peersim.core.*;
 import peersim.config.*;
 import peersim.edsim.*;
 import peersim.transport.*;
+
+import java.security.InvalidParameterException;
 import java.util.Scanner;
 import java.lang.Math.*;
 
@@ -419,6 +421,11 @@ public class BitTorrent implements EDProtocol {
 		nMaxNodes = Network.getCapacity()-1;
 		freeRiders = (int)Configuration.getInt(prefix+"."+FREE_RIDERS);
 		peersetRadius = 5*(int)Configuration.getInt(prefix+"."+PEERSET_RADIUS);
+
+		// stop if parameters are invalid
+		if(peersetSize >= swarmSize){
+			throw new InvalidParameterException("PeersetSize should be lesser than swarmSize. See config file");
+		}
 	}
 
 	/** Compute the distance between two Nodes
@@ -1081,7 +1088,7 @@ public class BitTorrent implements EDProtocol {
 			{
 				//On récupère le node qui envoie le message TRACKER
 				Node sender = ((SimpleMsg)event).getSender();
-				System.out.println("process, tracker: sender is "+sender.getID()+", local is "+node.getID());
+				System.out.println("processing TRACKER msg. Sender is "+sender.getID()+", local is "+node.getID());
 
 				//Si le sender est mort on sort
 				if(!alive(sender))
@@ -1096,18 +1103,18 @@ public class BitTorrent implements EDProtocol {
 
 				//Premier cas : Si la taille du réseau < peerSetSize
 
-
+				//TODO check distance between peers
 				if(nNodes <= peersetSize){
 					//System.out.println("sender #"+sender.getID()+"en ("+sender.getCoordX()+","+sender.getCoordY()+")");
 					for(int i=0; i< nMaxNodes+maxGrowth; i++){
 
 						if(cache[i].node != null && cache[i].node.getID()!= sender.getID()){
 							//System.out.println("node #"+cache[i].node.getID()+"en ("+cache[i].node.getCoordX()+","+cache[i].node.getCoordY()+")");							tmp[k]=cache[i];
+							tmp[i]=cache[i];
 							k++;
 						}
 					}
 
-					//System.out.println("TRACKER envoyé par node#"+sender.getID());
 					//EnterKey();
 					ev = new PeerSetMsg(PEERSET, tmp, node);
 					latency = ((Transport)node.getProtocol(tid)).getLatency(node, sender);
@@ -1117,22 +1124,21 @@ public class BitTorrent implements EDProtocol {
 
 				//Si la taille de réseau >= au Peersetsize:
 
-				//Tant que le peerset n'est pas rempli
-				while(j < peersetSize){
+				//Tant que le peerset n'est pas rempli ou qu'on a pas fait le tour de tout le monde
+				while(j < peersetSize ){
 
 					//On tire un i aléatoire
 					int i = CommonState.r.nextInt(nMaxNodes+maxGrowth);
 
-					//On parcourt 0->i
-					for (int z=0; z<j; z++){
-						//Si le noeud est null
-						//ou déjà dans le cache
-						//ou qu'il s'agit du sender
+					//On parcourt 0->j
+					int z =0;
+					while(z<j){
+						//Si le noeud est null ou déjà dans le cache ou qu'il s'agit du sender
 						//	-> on retire un aléatoire
-						if(cache[i].node==null || tmp[z].node.getID() == cache[i].node.getID() || cache[i].node.getID() == sender.getID()){
+						if(cache[i].node==null ||  tmp[z].node.getID() == cache[i].node.getID() || cache[i].node.getID() == sender.getID()){
 							z=0;
 							i= CommonState.r.nextInt(nMaxNodes+maxGrowth);
-						}
+						} else z++;
 					}
 					if(cache[i].node != null && getDistance(cache[i].node,sender) < peersetRadius){
 						tmp[j] = cache[i];
