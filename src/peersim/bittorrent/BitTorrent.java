@@ -1088,7 +1088,7 @@ public class BitTorrent implements EDProtocol {
 			{
 				//On récupère le node qui envoie le message TRACKER
 				Node sender = ((SimpleMsg)event).getSender();
-				System.out.println("processing TRACKER msg. Sender is "+sender.getID()+", local is "+node.getID());
+				//System.out.println("processing TRACKER msg. Sender is "+sender.getID()+", local is "+node.getID());
 
 				//Si le sender est mort on sort
 				if(!alive(sender))
