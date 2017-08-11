@@ -167,15 +167,15 @@ public class NodeInitializer{
 	 *	@see #PAR_NEWER_DISTR
 	 */
 	private int getProbability(){
-		int value = CommonState.r.nextInt(1000);
-		if((value)<=seederDistr)
+		int value = CommonState.r.nextInt(100);
+		if((value)<seederDistr)
 			return 100;
 		value = CommonState.r.nextInt(100);
-		if((value)<=newerDistr){
+		if((value)<newerDistr){
 			return 0; // A newer peer, with probability newer_distr
 		}
 		else{
-			value = CommonState.r.nextInt(9);
+			value = CommonState.r.nextInt(8);
 			return (value+1)*10;
 		}
 	}
