@@ -29,9 +29,8 @@ import peersim.edsim.*;
 import peersim.transport.*;
 
 import java.security.InvalidParameterException;
-import java.util.Scanner;
+import java.util.*;
 import java.lang.Math.*;
-
 
 
 /**
@@ -382,6 +381,11 @@ public class BitTorrent implements EDProtocol {
 	private int numberOfDuplicatedRequests;
 
 	/**
+	 * Activate any System.err.println() if true
+	 */
+	private Boolean DEBUG;
+
+	/**
 	 *	The queue where the requests to serve are stored.
 	 *	The default dimension of the queue is 20.
 	 */
@@ -421,6 +425,8 @@ public class BitTorrent implements EDProtocol {
 		nMaxNodes = Network.getCapacity()-1;
 		freeRiders = (int)Configuration.getInt(prefix+"."+FREE_RIDERS);
 		peersetRadius = 5*(int)Configuration.getInt(prefix+"."+PEERSET_RADIUS);
+
+		DEBUG = (Boolean) Configuration.getBoolean(prefix+"."+"debug");
 
 		// stop if parameters are invalid
 		if(peersetSize >= swarmSize){
@@ -587,7 +593,7 @@ public class BitTorrent implements EDProtocol {
 					}
 				}
 				else{
-					System.err.println("Unexpected : unknown KEEP_ALIVE sender. BitTorrent.java:583");
+					if (DEBUG) System.err.println("Unexpected : unknown KEEP_ALIVE sender. BitTorrent.java:583");
 					ev = new BitfieldMsg(BITFIELD, true, false, node, status, nPieces);
 					latency = ((Transport)node.getProtocol(tid)).getLatency(node,sender);
 					EDSimulator.add(latency,ev,sender,pid);
@@ -606,7 +612,7 @@ public class BitTorrent implements EDProtocol {
 					unchokedBy[e.peer]= false; // I'm choked by it
 				}
 				else{
-					System.err.println("Unexpected : unknown CHOKE sender. BitTorrent.java:602");
+					if (DEBUG)  System.err.println("Unexpected : unknown CHOKE sender. BitTorrent.java:602");
 					ev = new BitfieldMsg(BITFIELD, true, false, node, status, nPieces);
 					latency = ((Transport)node.getProtocol(tid)).getLatency(node,sender);
 					EDSimulator.add(latency,ev,sender,pid);
@@ -695,10 +701,10 @@ public class BitTorrent implements EDProtocol {
 				}
 				else // It should never happen.
 				{
-					System.err.println("Unexpected : unknown UNCHOKE sender. BitTorrent.java:691");
+					if (DEBUG) System.err.println("Unexpected : unknown UNCHOKE sender. BitTorrent.java:691");
 					for(int i=0; i<swarmSize; i++)
 						if(cache[i].node !=null)
-							System.err.println(cache[i].node.getID());
+							if (DEBUG) System.err.println(cache[i].node.getID());
 					ev = new BitfieldMsg(BITFIELD, true, false, node, status, nPieces);
 					latency = ((Transport)node.getProtocol(tid)).getLatency(node,sender);
 					EDSimulator.add(latency,ev,sender,pid);
@@ -718,7 +724,7 @@ public class BitTorrent implements EDProtocol {
 					cache[e.peer].interested = value;
 				}
 				else{
-					System.err.println("Unexpected : unknown KEEP_ALIVE sender. BitTorrent.java:714");
+					if (DEBUG) System.err.println("Unexpected : unknown KEEP_ALIVE sender. BitTorrent.java:714");
 					ev = new BitfieldMsg(BITFIELD, true, false, node, status, nPieces);
 					latency = ((Transport)node.getProtocol(tid)).getLatency(node,sender);
 					EDSimulator.add(latency,ev,sender,pid);
@@ -760,7 +766,7 @@ public class BitTorrent implements EDProtocol {
 					e.isSeeder = isSeeder;
 				}
 				else{
-					System.err.println("Unexpected : unknown HAVE sender. BitTorrent.java:756");
+					if (DEBUG) System.err.println("Unexpected : unknown HAVE sender. BitTorrent.java:756");
 					ev = new BitfieldMsg(BITFIELD, true, false, node, status, nPieces);
 					latency = ((Transport)node.getProtocol(tid)).getLatency(node,sender);
 					EDSimulator.add(latency,ev,sender,pid);
@@ -904,9 +910,9 @@ public class BitTorrent implements EDProtocol {
 				int value = ((IntMsg)event).getInt();
 				Element e;
 				BitTorrent senderP;
-				int remoteRate;
-				int localRate;
-				int bandwidth;
+				float remoteRate;
+				float localRate;
+				float bandwidth;
 				int downloadTime;
 
 				e = search(sender.getID());
@@ -926,10 +932,10 @@ public class BitTorrent implements EDProtocol {
 						e.valueUP++;
 						senderP = ((BitTorrent)req.sender.getProtocol(pid));
 						senderP.nPiecesDown++;
-						remoteRate = senderP.maxBandwidth/(senderP.nPiecesUp + senderP.nPiecesDown);
-						localRate = maxBandwidth/(nPiecesUp + nPiecesDown);
+						remoteRate = ((float)senderP.maxBandwidth)/(senderP.nPiecesUp + senderP.nPiecesDown);
+						localRate = ((float)maxBandwidth)/(nPiecesUp + nPiecesDown);
 						bandwidth = Math.min(remoteRate, localRate);
-						downloadTime = ((16*8)/(bandwidth))*1000; // in milliseconds
+						downloadTime = (int) ((16*8)/(bandwidth))*1000; // in milliseconds
 						latency = ((Transport)node.getProtocol(tid)).getLatency(node,req.sender);
 						EDSimulator.add(latency+downloadTime,ev,req.sender,pid);
 						cache[e.peer].justSent();
@@ -1020,12 +1026,17 @@ public class BitTorrent implements EDProtocol {
 						}
 					}
 					if(nPieceCompleted == nPieces){
-						//System.out.println("FILE COMPLETED for peer "+node.getID());
+						// System.err.println("FILE COMPLETED for peer "+node.getID());
 						this.peerStatus = 1;
 
-						//by Adrien : added freeRiders
+						// freeRiders : randomly leave the network.
 						if (CommonState.r.nextInt(100) <= freeRiders) {
-							Network.remove((int)node.getID());
+							// node.index must be used, as it reflects node's id in the network.
+							// this index changes, as the network evolve.
+							Network.remove( node.getIndex());
+							// then remove the node from he tracker cache
+							if (tracker.isUp()) {
+								((BitTorrent)tracker.getProtocol(pid)).removeNeighbor(node);}
 						}
 					}
 
@@ -1094,12 +1105,13 @@ public class BitTorrent implements EDProtocol {
 				if(!alive(sender))
 					return;
 
-				//On créé le tableau de voisin qu'on va envoyer à sender
+				//On, créé le tableau de voisin qu'on va envoyer à sender
+				ArrayList<Neighbor> temp = new ArrayList();
 				Neighbor tmp[] = new Neighbor[peersetSize];
-				int j=0;
+				//int j=0;
 				int k=0;
-				int indexDistMax=0;
-				double distMax=0;
+				//int indexDistMax=0;
+				//double distMax=0;
 
 				//Premier cas : Si la taille du réseau < peerSetSize
 
@@ -1124,11 +1136,47 @@ public class BitTorrent implements EDProtocol {
 
 				//Si la taille de réseau >= au Peersetsize:
 
-				//Tant que le peerset n'est pas rempli ou qu'on a pas fait le tour de tout le monde
-				while(j < peersetSize ){
+					int peerSetBlocs = nNodes / peersetSize;
+					int cursor = CommonState.r.nextInt(peersetSize);
+					int bloc =CommonState.r.nextInt(peerSetBlocs);
 
-					//On tire un i aléatoire
+					blocLoop:
+					for (int cursorLoop=0; cursorLoop < peersetSize; cursorLoop++ ) {
+						int currentCursor = (cursor + cursorLoop) % peersetSize;
+
+						for (int blocLoop = 0; blocLoop < peerSetBlocs; blocLoop++) {
+							int blocCursor = (bloc + blocLoop) % peerSetBlocs;
+							//System.out.println("bloc cursor "+blocCursor+" currentC "+currentCursor);
+
+							// if peerset is full we should stop iterating
+							if (temp.size() == peersetSize) {break blocLoop;}
+
+							int pickedPeer = blocCursor*peersetSize+currentCursor;
+
+							if (pickedPeer < nNodes) {
+
+								// si le noeud choisi répond aux critères (non null, dans le radius)
+								if (cache[pickedPeer].node != null &&
+									getDistance(cache[pickedPeer].node, sender) < peersetRadius ) {
+									//System.out.println("candidat trouvé "+ cache[pickedPeer].node.getID());
+
+										// N'est pas le sender lui même, n'existe pas dans le cache
+										if ( ! temp.contains(cache[pickedPeer]) &&
+												cache[pickedPeer].node.getID() != sender.getID()) {
+											temp.add(cache[pickedPeer]);
+										}
+								}
+							}
+						}
+					}
+
+					// we have been through all nodes
+					//tmp = (Neighbor[])temp.toArray();
+					temp.toArray(tmp);
+
+/*					//On tire un i aléatoire
 					int i = CommonState.r.nextInt(nMaxNodes+maxGrowth);
+					//cache[i]
 
 					//On parcourt 0->j
 					int z =0;
@@ -1144,7 +1192,8 @@ public class BitTorrent implements EDProtocol {
 						tmp[j] = cache[i];
 						j++;
 					}
-				}
+					i++;
+				}*/
 
 				//Opération d'envoi de tmp et du PEERSET au sender
 				ev = new PeerSetMsg(PEERSET, tmp, node);
@@ -1277,9 +1326,9 @@ public class BitTorrent implements EDProtocol {
 					receive anything from it though I sent a keepalive 2 minutes ago*/
 					else{
 						if(cache[i].lastSeen <(now-121000) && cache[i].node != null && cache[i].lastSent < (now-121000)){
-							System.out.println("process, checkalive_time, rm neigh " + cache[i].node.getID());
+							if (DEBUG) System.out.println("process, checkalive_time, rm neigh " + cache[i].node.getID());
 							if(cache[i].node.getIndex() != -1){
-								System.out.println("This should never happen: I remove a node that is not effectively died. BitTorrent.java:1337");
+								if (DEBUG) System.out.println("This should never happen: I remove a node that is not effectively died. BitTorrent.java:1337");
 							}
 							removeNeighbor(cache[i].node);
 							processNeighborListSize(node,pid);
