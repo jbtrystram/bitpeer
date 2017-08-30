@@ -547,7 +547,7 @@ public class BitTorrent implements EDProtocol {
 	 *	</p>
 	 */
 	private void processNeighborListSize(Node node, int pid) {
-		if (nNodes==20) {
+		if (nNodes <= peersetSize/3) {
 			Object ev;
 			long latency;
 			ev = new SimpleMsg(TRACKER, node);
