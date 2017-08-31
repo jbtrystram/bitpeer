@@ -1326,9 +1326,9 @@ public class BitTorrent implements EDProtocol {
 					receive anything from it though I sent a keepalive 2 minutes ago*/
 					else{
 						if(cache[i].lastSeen <(now-121000) && cache[i].node != null && cache[i].lastSent < (now-121000)){
-							if (DEBUG) System.out.println("process, checkalive_time, rm neigh " + cache[i].node.getID());
+							if (DEBUG) System.err.println("process, checkalive_time, rm neigh " + cache[i].node.getID());
 							if(cache[i].node.getIndex() != -1){
-								if (DEBUG) System.out.println("This should never happen: I remove a node that is not effectively died. BitTorrent.java:1337");
+								if (DEBUG) System.err.println("This should never happen: I remove a node that is not effectively died. BitTorrent.java:1337");
 							}
 							removeNeighbor(cache[i].node);
 							processNeighborListSize(node,pid);
