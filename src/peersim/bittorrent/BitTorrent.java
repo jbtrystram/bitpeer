@@ -1108,22 +1108,18 @@ public class BitTorrent implements EDProtocol {
 				//On, créé le tableau de voisin qu'on va envoyer à sender
 				ArrayList<Neighbor> temp = new ArrayList();
 				Neighbor tmp[] = new Neighbor[peersetSize];
-				//int j=0;
-				int k=0;
-				//int indexDistMax=0;
-				//double distMax=0;
+
 
 				//Premier cas : Si la taille du réseau < peerSetSize
 
-				//TODO check distance between peers
 				if(nNodes <= peersetSize){
 					//System.out.println("sender #"+sender.getID()+"en ("+sender.getCoordX()+","+sender.getCoordY()+")");
 					for(int i=0; i< nMaxNodes+maxGrowth; i++){
 
-						if(cache[i].node != null && cache[i].node.getID()!= sender.getID()){
+						if(cache[i].node != null && cache[i].node.getID()!= sender.getID()
+								&& getDistance(cache[i].node, sender) < peersetRadius){
 							//System.out.println("node #"+cache[i].node.getID()+"en ("+cache[i].node.getCoordX()+","+cache[i].node.getCoordY()+")");							tmp[k]=cache[i];
 							tmp[i]=cache[i];
-							k++;
 						}
 					}
 
